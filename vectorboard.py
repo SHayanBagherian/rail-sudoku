@@ -4,6 +4,18 @@ import matplotlib.pyplot as plt
 n = 4
 
 
+def random_on_border(ingr):
+    yindex = np.random.randint(0, n)
+    xindex = np.random.randint(0,4)
+    if xindex == 0:
+        return 0 , yindex , 'u'
+    elif xindex==1:
+        return yindex,0 , 'l'
+    elif xindex==2:
+        return n-1,yindex ,'d'
+    else:
+        return yindex,n-1 , 'r'
+    
 def nc(point_x,point_y, list): #neighbor check
     neighbors = ""
     if point_x - 1 >= 0:
@@ -57,12 +69,14 @@ def move(cxindex, cyindex ,ingr):
 #ingr = initial_grid
 ingr = np.full((n, n), ".", dtype="<U2")
 
-yindex = np.random.randint(0, n)
-xindex = 0
-
-ingr[xindex, yindex] = "u"
+xindex, yindex, starting_direction = random_on_border(ingr)
+print(xindex,yindex)
+pathway = [[xindex,yindex]]
+ingr[xindex, yindex] = starting_direction
 xindex, yindex, ingr = move(xindex, yindex ,ingr)
+pathway.append([xindex,yindex])
 xindex, yindex, ingr = move(xindex, yindex ,ingr)
+pathway.append([xindex,yindex])
 xindex, yindex, ingr = move(xindex, yindex ,ingr)
-
+pathway.append([xindex,yindex])
 print(ingr)
