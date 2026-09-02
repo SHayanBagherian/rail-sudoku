@@ -15,9 +15,33 @@ def random_on_border(ingr):
         return n-1,yindex ,'d'
     else:
         return yindex,n-1 , 'r'
-    
+
+
+#ingr = initial_grid
+ingr = np.full((n, n), ".", dtype="<U2")
+xindex, yindex, starting_direction = random_on_border(ingr)
+start = [xindex,yindex,starting_direction]
+print(start)
+end = list(random_on_border(ingr))
+print(end)
+
+def neighbor_with_end(x,y):
+    if abs(abs(int(end[0]) - x) + abs(int(end[1])- y)) == 1:
+        return True
+    return False
+
 def nc(point_x,point_y, list): #neighbor check
     neighbors = ""
+    if neighbor_with_end(point_x,point_y):
+        if point_x - 1 == int(end[0]):
+            return "u"
+        if point_x+1 == int(end[0]):
+            return "d"
+        if point_y - 1 == int(end[1]):
+            return "l"
+        if point_y + 1 == int(end[1]):
+            return "r"
+
     if point_x - 1 >= 0:
         if list[point_x - 1, point_y] == '.':
             neighbors +="u"
@@ -66,13 +90,10 @@ def move(cxindex, cyindex ,ingr):
     ingr = first_dir(next_x, next_y,direction)
     return next_x, next_y, ingr
 
-#ingr = initial_grid
-ingr = np.full((n, n), ".", dtype="<U2")
+pathway = [start[:2]]
+ingr[start[0],start[1]] = starting_direction
+ingr[end[0],end[1]]= end[2]
 
-xindex, yindex, starting_direction = random_on_border(ingr)
-print(xindex,yindex)
-pathway = [[xindex,yindex]]
-ingr[xindex, yindex] = starting_direction
 xindex, yindex, ingr = move(xindex, yindex ,ingr)
 pathway.append([xindex,yindex])
 xindex, yindex, ingr = move(xindex, yindex ,ingr)
