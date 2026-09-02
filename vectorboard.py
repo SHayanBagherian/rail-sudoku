@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 n = 4
 
 
-def random_on_border(ingr):
+def random_on_border():
     yindex = np.random.randint(0, n)
     xindex = np.random.randint(0,4)
     if xindex == 0:
@@ -18,48 +18,51 @@ def random_on_border(ingr):
 
 
 #ingr = initial_grid
-ingr = np.full((n, n), ".", dtype="<U2")
-xindex, yindex, starting_direction = random_on_border(ingr)
-start = [xindex,yindex,starting_direction]
-print(start)
-end = list(random_on_border(ingr))
-print(end)
+ingr = np.full((n, n), ".", dtype="<U4")
+start = list(random_on_border())
+end = list(random_on_border())
+# Ensure start and end points do not overlap
+while start[:2] == end[:2]:
+    end = list(random_on_border())
 
-def neighbor_with_end(x,y):
-    if abs(abs(int(end[0]) - x) + abs(int(end[1])- y)) == 1:
+print(f"Start: {start}")
+print(f"End:   {end}")
+
+def neighbor_with_end(x,y,i):
+    if abs(abs(int(end[0]) - x) + abs(int(end[1])- y)) == 1 and i>(n-1):
         return True
     return False
 
-def nc(point_x,point_y, list): #neighbor check
+def nc(point_x,point_y, list_grid,i): #neighbor check
     neighbors = ""
-    if neighbor_with_end(point_x,point_y):
+    if neighbor_with_end(point_x,point_y,i):
         if point_x - 1 == int(end[0]):
-            return "u"
+            return "u" ,True
         if point_x+1 == int(end[0]):
-            return "d"
+            return "d",True
         if point_y - 1 == int(end[1]):
-            return "l"
+            return "l",True
         if point_y + 1 == int(end[1]):
-            return "r"
+            return "r",True
 
     if point_x - 1 >= 0:
-        if list[point_x - 1, point_y] == '.':
+        if list_grid[point_x - 1, point_y] == '.':
             neighbors +="u"
     if point_x + 1 <= n-1 :
-        if list[point_x + 1, point_y] == '.':
+        if list_grid[point_x + 1, point_y] == '.':
             neighbors +="d"
     if point_y - 1 >= 0 :
-        if list[point_x, point_y -1] == '.':
+        if list_grid[point_x, point_y -1] == '.':
             neighbors +="l"
     if point_y + 1 <= n-1:
-        if list[point_x, point_y +1] == '.':
+        if list_grid[point_x, point_y +1] == '.':
             neighbors +="r"
-    return neighbors
+    return neighbors,False
 
-def rns(point_x, point_y, grid):
-    neighbors = nc(point_x, point_y, grid)
+def rns(point_x, point_y, grid,i):
+    neighbors , final = nc(point_x, point_y, grid,i)
     if not neighbors:
-        return "", point_x, point_y
+        return "b", point_x, point_y , final
     selector = np.random.randint(0, len(neighbors))
     chosen_dir = neighbors[selector]
     new_x, new_y = point_x, point_y
@@ -71,7 +74,7 @@ def rns(point_x, point_y, grid):
         new_y -= 1
     elif chosen_dir == "r":
         new_y += 1
-    return chosen_dir, new_x, new_y
+    return chosen_dir, new_x, new_y , final
 
 def first_dir(x,y,dir):
     if dir == "u":
@@ -82,22 +85,45 @@ def first_dir(x,y,dir):
         dir = "r"
     elif dir == "r":
         dir = "l"
-    ingr[x, y] = dir
+    if [x, y] != [int(end[0]), int(end[1])]:
+        ingr[x, y] = dir
     return ingr
-def move(cxindex, cyindex ,ingr):
-    direction, next_x, next_y = rns(cxindex, cyindex, ingr)
+
+def move(cxindex, cyindex ,ingr,pathway,i):
+    direction, next_x, next_y ,final= rns(cxindex, cyindex, ingr,i)
+    if direction == "b":
+        ingr[cxindex, cyindex] = "-"
+        pathway.pop()
+        cxindex, cyindex = pathway[-1][0],pathway[-1][1]
+        ingr[cxindex, cyindex] = str(ingr[cxindex, cyindex])[:-1]
+        return cxindex, cyindex, ingr, final
+
     ingr[cxindex, cyindex] += direction
     ingr = first_dir(next_x, next_y,direction)
-    return next_x, next_y, ingr
+    pathway.append([next_x, next_y])
+    return next_x, next_y, ingr, final
 
-pathway = [start[:2]]
-ingr[start[0],start[1]] = starting_direction
-ingr[end[0],end[1]]= end[2]
+def path_builder(ingr):
+    i=0
+    pathway = [start[:2]]
+    xindex , yindex = start[0],start[1]
+    ingr[start[0],start[1]] = start[2]
+    ingr[end[0],end[1]]= end[2]
+    final = False
+    while final == False:
+        xindex, yindex, ingr,final = move(xindex, yindex ,ingr,pathway,i)
+        i+=1
+        print(ingr)
+        print("---")
+    final_direction = str(ingr[pathway[-2][0],pathway[-2][1]])[-1]
+    if  final_direction == "u":
+        ingr[end[0],end[1]] += 'd'
+    if  final_direction == "d":
+        ingr[end[0],end[1]] += 'u'
+    if  final_direction == "l":
+        ingr[end[0],end[1]] += 'l'
+    if  final_direction == "r":
+        ingr[end[0],end[1]] += 'l'
 
-xindex, yindex, ingr = move(xindex, yindex ,ingr)
-pathway.append([xindex,yindex])
-xindex, yindex, ingr = move(xindex, yindex ,ingr)
-pathway.append([xindex,yindex])
-xindex, yindex, ingr = move(xindex, yindex ,ingr)
-pathway.append([xindex,yindex])
-print(ingr)
+    return ingr,pathway
+ingr,pathway = path_builder(ingr)
